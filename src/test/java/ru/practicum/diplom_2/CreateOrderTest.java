@@ -7,12 +7,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import ru.practicum.diplom_2.pojos.GetOrderResponse;
-import ru.practicum.diplom_2.pojos.GetUserOrdersResponse;
 import ru.practicum.diplom_2.pojos.BasicResponse;
 import ru.practicum.diplom_2.pojos.SuccessCreateOrderResponse;
 import ru.practicum.diplom_2.steps.OrderSteps;
 
-public class OrderTest {
+public class CreateOrderTest {
 
     @Before
     public void init() {
@@ -83,33 +82,5 @@ public class OrderTest {
         OrderSteps.createOrderWithWrongIngredients()
                 .then()
                 .statusCode(500);
-    }
-
-    @DisplayName("Получение заказов пользователя с авторизацией проходит успешно")
-    @Test
-    public void getUserOrderWithAuthSuccess() {
-        GetUserOrdersResponse response = OrderSteps.getUsersOrdersWithAuth()
-                .then()
-                .statusCode(200)
-                .extract()
-                .as(GetUserOrdersResponse.class);
-
-        Assert.assertTrue(response.isSuccess());
-        Assert.assertFalse(response.getOrders().isEmpty());
-        Assert.assertNotEquals(0, response.getTotal());
-        Assert.assertNotEquals(0, response.getTotalToday());
-    }
-
-    @DisplayName("Получение заказов пользователя без авторизации не выполняется")
-    @Test
-    public void getUserOrderWithoutAuth401ErrorMessage() {
-        BasicResponse response = OrderSteps.getUsersOrdersWithoutAuth()
-                .then()
-                .statusCode(401)
-                .extract()
-                .as(BasicResponse.class);
-
-        Assert.assertFalse(response.isSuccess());
-        Assert.assertEquals("You should be authorised", response.getMessage());
     }
 }
