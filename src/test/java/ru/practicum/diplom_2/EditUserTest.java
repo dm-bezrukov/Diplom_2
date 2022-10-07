@@ -1,7 +1,7 @@
 package ru.practicum.diplom_2;
 
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,20 +16,16 @@ public class EditUserTest {
     @Before
     public void init() {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-    }
-
-    @After
-    public void waitBeforeNextTest() {
-        //Ожидаем 2 секунды, чтобы избежать 429
+        //Ожидаем 3 секунды, чтобы избежать 429
         try {
-            Thread.sleep(2000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-
     @Test
+    @DisplayName("Успешное редактирование данных пользователя с авторизацией")
     public void editUserDataWithAuthSuccess() {
         UserRequest updatedUser = UsersUtils.getUniqueUser();
         SuccessPatchUserResponse response = UsersSteps.editUserDataWithAuth(updatedUser)
@@ -38,9 +34,10 @@ public class EditUserTest {
                 .extract()
                 .as(SuccessPatchUserResponse.class);
 
-        Assert.assertTrue(response.isSuccess());
-        Assert.assertEquals(updatedUser.getEmail().toLowerCase(), response.getUser().getEmail().toLowerCase());
-        Assert.assertEquals(updatedUser.getName(), response.getUser().getName());
+        Assert.assertTrue("Запрос должен быть выполнен успешно", response.isSuccess());
+        Assert.assertEquals("Неверное значение поля email", updatedUser.getEmail().toLowerCase(),
+                response.getUser().getEmail().toLowerCase());
+        Assert.assertEquals("Неверное значение поля name", updatedUser.getName(), response.getUser().getName());
 
         String accessToken = UsersSteps.signInWithEmailAndPassword(updatedUser.getEmail(), updatedUser.getPassword())
                 .then()
@@ -54,6 +51,7 @@ public class EditUserTest {
     }
 
     @Test
+    @DisplayName("Редактирование данных пользователя без авторизации возвращает ошибку")
     public void editUserDataWithoutAuthReturns401ErrorMessage() {
         BasicResponse response = UsersSteps.editUserDataWithoutAuth()
                 .then()
@@ -61,7 +59,7 @@ public class EditUserTest {
                 .extract()
                 .as(BasicResponse.class);
 
-        Assert.assertFalse(response.isSuccess());
-        Assert.assertEquals("You should be authorised", response.getMessage());
+        Assert.assertFalse("Запрос не должен быть выполнен успешно", response.isSuccess());
+        Assert.assertEquals("Неверный текст ошибки", "You should be authorised", response.getMessage());
     }
 }

@@ -1,7 +1,7 @@
 package ru.practicum.diplom_2;
 
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,19 +15,16 @@ public class CreateUserTest {
     @Before
     public void init() {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-    }
-
-    @After
-    public void waitBeforeNextTest() {
-        //Ожидаем 2 секунды, чтобы избежать 429
+        //Ожидаем 3 секунды, чтобы избежать 429
         try {
-            Thread.sleep(2000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     @Test
+    @DisplayName("Успешная регистрация уникального пользователя")
     public void registerUniqueUserSuccess() {
         UserRequest body = UsersUtils.getUniqueUser();
         SuccessSignInSignUpResponse response = UsersSteps.createUniqueUser(body)
@@ -36,11 +33,13 @@ public class CreateUserTest {
                 .extract()
                 .as(SuccessSignInSignUpResponse.class);
 
-        Assert.assertTrue(response.isSuccess());
-        Assert.assertFalse(response.getRefreshToken().isBlank());
-        Assert.assertFalse(response.getAccessToken().isBlank());
-        Assert.assertEquals(body.getEmail().toLowerCase(), response.getUser().getEmail().toLowerCase());
-        Assert.assertEquals(body.getName(), response.getUser().getName());
+        Assert.assertTrue("Запрос должен быть выполнен успешно", response.isSuccess());
+        Assert.assertFalse("Неверное значения поля refreshToken", response.getRefreshToken().isBlank());
+        Assert.assertFalse("Неверное значения поля accessToken", response.getAccessToken().isBlank());
+        Assert.assertEquals("Неверное значения поля email" + body.getEmail().toLowerCase(),
+                body.getEmail().toLowerCase(), response.getUser().getEmail().toLowerCase());
+        Assert.assertEquals("Неверное значения поля name",
+                body.getName(), response.getUser().getName());
 
         UsersSteps.deleteUser(response.getAccessToken())
                 .then()
@@ -48,6 +47,7 @@ public class CreateUserTest {
     }
 
     @Test
+    @DisplayName("При создании дубликата пользователя возвращается 403 ошибка")
     public void registerNotUniqueUserReturns403ErrorMessage() {
         BasicResponse response = UsersSteps.createDuplicateUser()
                 .then()
@@ -55,11 +55,12 @@ public class CreateUserTest {
                 .extract()
                 .as(BasicResponse.class);
 
-        Assert.assertFalse(response.isSuccess());
-        Assert.assertEquals("User already exists", response.getMessage());
+        Assert.assertFalse("Запрос не должен быть выполнен успешно", response.isSuccess());
+        Assert.assertEquals("Неверный текст ошибки", "User already exists", response.getMessage());
     }
 
     @Test
+    @DisplayName("При создании пользователя без пароля возвращается 403 ошибка")
     public void registerUserWithoutPasswordReturns403ErrorMessage() {
         BasicResponse response = UsersSteps.createUserWithoutPassword()
                 .then()
@@ -67,7 +68,8 @@ public class CreateUserTest {
                 .extract()
                 .as(BasicResponse.class);
 
-        Assert.assertFalse(response.isSuccess());
-        Assert.assertEquals("Email, password and name are required fields", response.getMessage());
+        Assert.assertFalse("Запрос не должен быть выполнен успешно", response.isSuccess());
+        Assert.assertEquals("Неверный текст ошибки",
+                "Email, password and name are required fields", response.getMessage());
     }
 }

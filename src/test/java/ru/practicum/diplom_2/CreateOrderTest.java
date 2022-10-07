@@ -2,7 +2,6 @@ package ru.practicum.diplom_2;
 
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,13 +15,9 @@ public class CreateOrderTest {
     @Before
     public void init() {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-    }
-
-    @After
-    public void waitBeforeNextTest() {
-        //Ожидаем 2 секунды, чтобы избежать 429
+        //Ожидаем 3 секунды, чтобы избежать 429
         try {
-            Thread.sleep(2000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -39,19 +34,19 @@ public class CreateOrderTest {
 
         GetOrderResponse order = getOrderResponse.getOrder();
 
-        Assert.assertTrue(getOrderResponse.isSuccess());
-        Assert.assertFalse(getOrderResponse.getName().isBlank());
-        Assert.assertFalse(order.getIngredients().isEmpty());
-        Assert.assertFalse(order.get_id().isBlank());
-        Assert.assertFalse(order.getStatus().isBlank());
-        Assert.assertNotEquals(0, order.getPrice());
-        Assert.assertFalse(order.getName().isBlank());
-        Assert.assertFalse(order.getCreatedAt().isBlank());
-        Assert.assertFalse(order.getUpdatedAt().isBlank());
+        Assert.assertTrue("Запрос не выполнен", getOrderResponse.isSuccess());
+        Assert.assertFalse("Имя не должны быть пустым", getOrderResponse.getName().isBlank());
+        Assert.assertFalse("Заказ не может быть без ингредиентов", order.getIngredients().isEmpty());
+        Assert.assertFalse("Заказ не может не содержать id", order.get_id().isBlank());
+        Assert.assertFalse("Статус заказа не может быть пустым", order.getStatus().isBlank());
+        Assert.assertNotEquals("Цена не может быть равно 0",0, order.getPrice());
+        Assert.assertFalse("Имя в заказе не должны быть пустым", order.getName().isBlank());
+        Assert.assertFalse("Дата создания не может быть пустой", order.getCreatedAt().isBlank());
+        Assert.assertFalse("Дата обновления не может быть пустой", order.getUpdatedAt().isBlank());
     }
 
-    @DisplayName("Создание заказа с авторизацией и без ингредиентов не выполняется")
     @Test
+    @DisplayName("Создание заказа с авторизацией и без ингредиентов не выполняется")
     public void createOrderWithoutIngredients400ErrorMessage() {
         BasicResponse response = OrderSteps.createOrderWithoutIngredients()
                 .then()
@@ -59,12 +54,12 @@ public class CreateOrderTest {
                 .extract()
                 .as(BasicResponse.class);
 
-        Assert.assertFalse(response.isSuccess());
-        Assert.assertEquals("Ingredient ids must be provided", response.getMessage());
+        Assert.assertFalse("Запрос не должен быть выполнен успешно", response.isSuccess());
+        Assert.assertEquals("Неверный текст ошибки", "Ingredient ids must be provided", response.getMessage());
     }
 
-    @DisplayName("Создание заказа без авторизации не выполняется")
     @Test
+    @DisplayName("Создание заказа без авторизации не выполняется")
     public void createOrderWithoutAuth401ErrorMessage() {
         BasicResponse response = OrderSteps.createOrderWithoutAuth()
                 .then()
@@ -72,12 +67,12 @@ public class CreateOrderTest {
                 .extract()
                 .as(BasicResponse.class);
 
-        Assert.assertFalse(response.isSuccess());
-        Assert.assertEquals("You should be authorised", response.getMessage());
+        Assert.assertFalse("Запрос не должен быть выполнен успешно", response.isSuccess());
+        Assert.assertEquals("Неверный текст ошибки", "You should be authorised", response.getMessage());
     }
 
-    @DisplayName("Создание заказа с неверным хешом ингредиентов не выполняется")
     @Test
+    @DisplayName("Создание заказа с неверным хешом ингредиентов не выполняется")
     public void createOrderWithWrongIngredientsReturns500ErrorMessage() {
         OrderSteps.createOrderWithWrongIngredients()
                 .then()
