@@ -1,32 +1,19 @@
 package ru.practicum.diplom_2;
 
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import ru.practicum.diplom_2.pojos.GetOrderResponse;
 import ru.practicum.diplom_2.pojos.BasicResponse;
 import ru.practicum.diplom_2.pojos.SuccessCreateOrderResponse;
 import ru.practicum.diplom_2.steps.OrderSteps;
 
-public class CreateOrderTest {
-
-    @Before
-    public void init() {
-        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-        //Ожидаем 3 секунды, чтобы избежать 429
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
+public class CreateOrderTest extends BaseTest{
 
     @DisplayName("Создание заказа с авторизацией и ингредиентами проходит успешно")
     @Test
     public void createOrderWithAuthSuccess() {
-        SuccessCreateOrderResponse getOrderResponse = OrderSteps.createOrderWithAuth()
+        SuccessCreateOrderResponse getOrderResponse = OrderSteps.createOrderWithAuth(accessToken)
                 .then()
                 .statusCode(200)
                 .extract()
@@ -48,14 +35,15 @@ public class CreateOrderTest {
     @Test
     @DisplayName("Создание заказа с авторизацией и без ингредиентов не выполняется")
     public void createOrderWithoutIngredients400ErrorMessage() {
-        BasicResponse response = OrderSteps.createOrderWithoutIngredients()
+        BasicResponse response = OrderSteps.createOrderWithoutIngredients(accessToken)
                 .then()
                 .statusCode(400)
                 .extract()
                 .as(BasicResponse.class);
 
         Assert.assertFalse("Запрос не должен быть выполнен успешно", response.isSuccess());
-        Assert.assertEquals("Неверный текст ошибки", "Ingredient ids must be provided", response.getMessage());
+        Assert.assertEquals("Неверный текст ошибки", "Ingredient ids must be provided",
+                response.getMessage());
     }
 
     @Test

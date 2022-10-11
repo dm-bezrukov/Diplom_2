@@ -1,30 +1,19 @@
 package ru.practicum.diplom_2;
 
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import ru.practicum.diplom_2.pojos.BasicResponse;
 import ru.practicum.diplom_2.pojos.GetUserOrdersResponse;
 import ru.practicum.diplom_2.steps.OrderSteps;
 
-public class GetOrderTest {
-    @Before
-    public void init() {
-        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-        //Ожидаем 3 секунды, чтобы избежать 429
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
+public class GetOrderTest extends BaseTest {
 
     @DisplayName("Получение заказов пользователя с авторизацией проходит успешно")
     @Test
     public void getUserOrderWithAuthSuccess() {
-        GetUserOrdersResponse response = OrderSteps.getUsersOrdersWithAuth()
+        OrderSteps.createOrderWithAuth(accessToken);
+        GetUserOrdersResponse response = OrderSteps.getUsersOrdersWithAuth(accessToken)
                 .then()
                 .statusCode(200)
                 .extract()

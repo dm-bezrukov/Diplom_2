@@ -7,17 +7,16 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import ru.practicum.diplom_2.pojos.UserRequest;
 import ru.practicum.diplom_2.pojos.SignInRequest;
-import ru.practicum.diplom_2.pojos.SuccessSignInSignUpResponse;
-import ru.practicum.diplom_2.utils.ConfigFileReader;
 import ru.practicum.diplom_2.utils.UsersUtils;
-
 import static io.restassured.RestAssured.given;
+import static ru.practicum.diplom_2.constants.BaseConstants.BASE_TEST_URL;
+import static ru.practicum.diplom_2.constants.UserConstants.*;
 
 public class UsersSteps {
-    public static RequestSpecification REQUEST_SPECIFICATION =
+    public static final RequestSpecification REQUEST_SPECIFICATION =
             new RequestSpecBuilder()
-                    .setBaseUri(new ConfigFileReader().getApplicationUrl())
-                    .setBasePath("/auth")
+                    .setBaseUri(BASE_TEST_URL)
+                    .setBasePath(BASE_AUTH_URL)
                     .setContentType(ContentType.JSON)
                     .build();
 
@@ -27,7 +26,7 @@ public class UsersSteps {
                 .spec(REQUEST_SPECIFICATION)
                 .body(body)
                 .when()
-                .post("/register");
+                .post(BASE_REGISTER_URL);
     }
 
     @Step("Создаём дубликат юзера")
@@ -37,13 +36,13 @@ public class UsersSteps {
                 .spec(REQUEST_SPECIFICATION)
                 .body(user)
                 .when()
-                .post("/register");
+                .post(BASE_REGISTER_URL);
 
         return given()
                 .spec(REQUEST_SPECIFICATION)
                 .body(user)
                 .when()
-                .post("/register");
+                .post(BASE_REGISTER_URL);
     }
 
     @Step("Создаём юзера без пароля")
@@ -55,27 +54,16 @@ public class UsersSteps {
                 .spec(REQUEST_SPECIFICATION)
                 .body(user)
                 .when()
-                .post("/register");
+                .post(BASE_REGISTER_URL);
     }
 
-    @Step("Выполняем авторизацию по email и паролю")
-    public static Response signInWithEmailAndPassword(String email, String password) {
+    @Step("Выполняем авторизацию с помощью тела запроса на авторизацию")
+    public static Response signInWithSignInRequest(SignInRequest signInRequest) {
         return given()
                 .spec(REQUEST_SPECIFICATION)
-                .body(new SignInRequest(email, password))
+                .body(signInRequest)
                 .when()
-                .post("/login");
-    }
-
-    @Step("Выполняем авторизацию под тестовым пользователем")
-    public static Response signInWithTestUser() {
-        ConfigFileReader configFileReader = new ConfigFileReader();
-        return given()
-                .spec(REQUEST_SPECIFICATION)
-                .body(new SignInRequest(configFileReader.getTestUserEmail(),
-                        configFileReader.getTestUserPassword()))
-                .when()
-                .post("/login");
+                .post(BASE_LOGIN_URL);
     }
 
     @Step("Выполняем авторизацию под несуществующими данными")
@@ -86,43 +74,26 @@ public class UsersSteps {
                 .spec(REQUEST_SPECIFICATION)
                 .body(user)
                 .when()
-                .post("/login");
+                .post(BASE_LOGIN_URL);
     }
 
-    @Step("Создаём пользователя, авторизуемся и редактируем информацию о юзере")
-    public static Response editUserDataWithAuth(UserRequest updatedUser) {
-        UserRequest user = UsersUtils.getUniqueUser();
-        createUniqueUser(user);
-
-        SuccessSignInSignUpResponse signInResponse = UsersSteps.signInWithEmailAndPassword(user.getEmail(), user.getPassword()).
-                as(SuccessSignInSignUpResponse.class);
-
-        String accessToken = signInResponse.getAccessToken();
-
+    @Step("Авторизуемся и редактируем информацию о юзере")
+    public static Response editUserDataWithAuth(String accessToken, UserRequest updatedUser) {
         return given()
                 .spec(REQUEST_SPECIFICATION)
                 .header("Authorization", accessToken)
                 .body(updatedUser)
                 .when()
-                .patch("/user");
+                .patch(BASE_USER_URL);
     }
 
-    @Step("Создаём пользователя, и редактируем информацию о юзере без авторизации")
+    @Step("Редактируем информацию о юзере без авторизации")
     public static Response editUserDataWithoutAuth() {
-        given()
-                .spec(REQUEST_SPECIFICATION)
-                .body(UsersUtils.getUniqueUser())
-                .when()
-                .post("/register")
-                .then()
-                .statusCode(200);
-
-
         return given()
                 .spec(REQUEST_SPECIFICATION)
                 .body(UsersUtils.getUniqueUser())
                 .when()
-                .patch("/user");
+                .patch(BASE_USER_URL);
     }
 
     @Step("Удаляем пользователя")
@@ -131,6 +102,6 @@ public class UsersSteps {
                 .spec(REQUEST_SPECIFICATION)
                 .header("Authorization", accessToken)
                 .when()
-                .delete("/user");
+                .delete(BASE_USER_URL);
     }
 }

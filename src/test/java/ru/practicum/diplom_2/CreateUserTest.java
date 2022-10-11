@@ -1,9 +1,8 @@
 package ru.practicum.diplom_2;
 
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
+import io.restassured.response.Response;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import ru.practicum.diplom_2.pojos.BasicResponse;
 import ru.practicum.diplom_2.pojos.SuccessSignInSignUpResponse;
@@ -11,17 +10,7 @@ import ru.practicum.diplom_2.pojos.UserRequest;
 import ru.practicum.diplom_2.steps.UsersSteps;
 import ru.practicum.diplom_2.utils.UsersUtils;
 
-public class CreateUserTest {
-    @Before
-    public void init() {
-        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-        //Ожидаем 3 секунды, чтобы избежать 429
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
+public class CreateUserTest extends BaseTest {
 
     @Test
     @DisplayName("Успешная регистрация уникального пользователя")
@@ -49,11 +38,22 @@ public class CreateUserTest {
     @Test
     @DisplayName("При создании дубликата пользователя возвращается 403 ошибка")
     public void registerNotUniqueUserReturns403ErrorMessage() {
-        BasicResponse response = UsersSteps.createDuplicateUser()
+        Response baseResponse = UsersSteps.createDuplicateUser();
+
+        if (baseResponse.getStatusCode() == 200) {
+            UsersSteps.deleteUser(baseResponse
+                    .then()
+                    .extract()
+                    .as(SuccessSignInSignUpResponse.class)
+                    .getAccessToken());
+        }
+
+        BasicResponse response = baseResponse
                 .then()
                 .statusCode(403)
                 .extract()
                 .as(BasicResponse.class);
+
 
         Assert.assertFalse("Запрос не должен быть выполнен успешно", response.isSuccess());
         Assert.assertEquals("Неверный текст ошибки", "User already exists", response.getMessage());
@@ -62,7 +62,17 @@ public class CreateUserTest {
     @Test
     @DisplayName("При создании пользователя без пароля возвращается 403 ошибка")
     public void registerUserWithoutPasswordReturns403ErrorMessage() {
-        BasicResponse response = UsersSteps.createUserWithoutPassword()
+        Response baseResponse = UsersSteps.createUserWithoutPassword();
+
+        if (baseResponse.getStatusCode() == 200) {
+            UsersSteps.deleteUser(baseResponse
+                    .then()
+                    .extract()
+                    .as(SuccessSignInSignUpResponse.class)
+                    .getAccessToken());
+        }
+
+        BasicResponse response = baseResponse
                 .then()
                 .statusCode(403)
                 .extract()

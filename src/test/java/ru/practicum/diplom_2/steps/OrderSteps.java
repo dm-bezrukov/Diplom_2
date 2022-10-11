@@ -6,34 +6,32 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang3.RandomStringUtils;
-import ru.practicum.diplom_2.pojos.GetAllIngredientsResponse;
-import ru.practicum.diplom_2.pojos.OrderRequest;
-import ru.practicum.diplom_2.pojos.SuccessSignInSignUpResponse;
-import ru.practicum.diplom_2.utils.ConfigFileReader;
+import ru.practicum.diplom_2.pojos.*;
 import ru.practicum.diplom_2.utils.OrderUtils;
 import java.util.Arrays;
 import java.util.List;
 import static io.restassured.RestAssured.given;
+import static ru.practicum.diplom_2.constants.BaseConstants.BASE_TEST_URL;
+import static ru.practicum.diplom_2.constants.OrderConstants.BASE_INGREDIENTS_URL;
+import static ru.practicum.diplom_2.constants.OrderConstants.BASE_ORDERS_URL;
+
 public class OrderSteps {
-    public static RequestSpecification REQUEST_SPECIFICATION =
+    public static final RequestSpecification REQUEST_SPECIFICATION =
             new RequestSpecBuilder()
-                    .setBaseUri(new ConfigFileReader().getApplicationUrl())
-                    .setBasePath("/orders")
+                    .setBaseUri(BASE_TEST_URL)
+                    .setBasePath(BASE_ORDERS_URL)
                     .setContentType(ContentType.JSON)
                     .build();
 
-    public static RequestSpecification INGREDIENTS_REQUEST_SPECIFICATION =
+    public static final RequestSpecification INGREDIENTS_REQUEST_SPECIFICATION =
             new RequestSpecBuilder()
-                    .setBaseUri(new ConfigFileReader().getApplicationUrl())
-                    .setBasePath("/ingredients")
+                    .setBaseUri(BASE_TEST_URL)
+                    .setBasePath(BASE_INGREDIENTS_URL)
                     .setContentType(ContentType.JSON)
                     .build();
 
-    @Step("Авторизуемся и создаём новый заказ c ингредиентами")
-    public static Response createOrderWithAuth() {
-        String accessToken = UsersSteps.signInWithTestUser()
-                .as(SuccessSignInSignUpResponse.class).getAccessToken();
-
+    @Step("Создаём новый заказ c ингредиентами и авторизацией")
+    public static Response createOrderWithAuth(String accessToken) {
         GetAllIngredientsResponse allIngredientsResponse = getAllIngredients()
                 .then()
                 .statusCode(200)
@@ -50,11 +48,8 @@ public class OrderSteps {
                 .post();
     }
 
-    @Step("Авторизуемся и создаём новый заказ без ингредиентов")
-    public static Response createOrderWithoutIngredients() {
-        String accessToken = UsersSteps.signInWithTestUser()
-                .as(SuccessSignInSignUpResponse.class).getAccessToken();
-
+    @Step("Создаём новый заказ без ингредиентов с авторизацией")
+    public static Response createOrderWithoutIngredients(String accessToken) {
         return given()
                 .spec(REQUEST_SPECIFICATION)
                 .header("Authorization", accessToken)
@@ -90,10 +85,7 @@ public class OrderSteps {
     }
 
     @Step("Получаем заказы конкретного пользователя с авторизацией")
-    public static Response getUsersOrdersWithAuth() {
-        String accessToken = UsersSteps.signInWithTestUser()
-                .as(SuccessSignInSignUpResponse.class).getAccessToken();
-
+    public static Response getUsersOrdersWithAuth(String accessToken) {
         return given()
                 .spec(REQUEST_SPECIFICATION)
                 .header("Authorization", accessToken)
